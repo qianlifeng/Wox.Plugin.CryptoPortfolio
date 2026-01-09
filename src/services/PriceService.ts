@@ -33,9 +33,10 @@ export class PriceService {
       const response = await client.get<CryptoPrices>(url)
       this.api.Log(ctx, "Info", `[PriceService] Response: ${JSON.stringify(response.data)}`)
       return response.data
-    } catch (error: any) {
-      this.api.Log(ctx, "Error", `[PriceService] Failed to fetch prices: ${error.message}`)
-      if (error.response) {
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error)
+      this.api.Log(ctx, "Error", `[PriceService] Failed to fetch prices: ${msg}`)
+      if (axios.isAxiosError(error) && error.response) {
         this.api.Log(ctx, "Error", `[PriceService] Status: ${error.response.status}`)
       }
       // Return empty or throw, Manager handles partial failures

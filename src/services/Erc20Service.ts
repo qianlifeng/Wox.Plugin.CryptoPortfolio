@@ -3,6 +3,12 @@ import { AssetInfo } from "../types"
 import { Symbol } from "../constants"
 import { ICoinService, Logger, LogLevel } from "./interfaces"
 
+interface EtherscanResponse {
+  status: string
+  message: string
+  result: unknown
+}
+
 export class Erc20Service implements ICoinService {
   token: Symbol
   private logger?: Logger
@@ -52,7 +58,7 @@ export class Erc20Service implements ICoinService {
     }
 
     try {
-      const response = await axios.get(url)
+      const response = await axios.get<EtherscanResponse>(url)
       const data = response.data
 
       this.log("Info", `[Erc20Service-${this.token.symbol}] Response Status: ${data.status}`)
@@ -78,8 +84,9 @@ export class Erc20Service implements ICoinService {
           value: 0
         }
       })
-    } catch (error: any) {
-      this.log("Error", `[Erc20Service-${this.token.symbol}] Request failed: ${error.message}`)
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error)
+      this.log("Error", `[Erc20Service-${this.token.symbol}] Request failed: ${msg}`)
       return addresses.map(addr => ({ address: addr, balance: 0, balanceFormatted: 0, value: 0 }))
     }
   }
@@ -95,11 +102,11 @@ export class Erc20Service implements ICoinService {
         // Rate limit protection
         await new Promise(r => setTimeout(r, 1000))
 
-        const response = await axios.get<any>(url)
+        const response = await axios.get<EtherscanResponse>(url)
         const data = response.data
 
         if (data.status === "1") {
-          const balance = parseFloat(data.result)
+          const balance = parseFloat(data.result as string)
           results.push({
             address: addr,
             balance: balance,
@@ -112,7 +119,7 @@ export class Erc20Service implements ICoinService {
           if (data.message !== "OK" && data.result !== "0") {
             this.log("Warning", `[Erc20Service-${this.token.symbol}] Failed for ${addr}: ${data.message}`)
           }
-          let val = parseFloat(data.result || "0")
+          let val = parseFloat((data.result as string) || "0")
           if (isNaN(val)) val = 0
 
           results.push({
@@ -122,8 +129,9 @@ export class Erc20Service implements ICoinService {
             value: 0
           })
         }
-      } catch (e: any) {
-        this.log("Error", `[Erc20Service-${this.token.symbol}] Error for ${addr}: ${e.message}`)
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e)
+        this.log("Error", `[Erc20Service-${this.token.symbol}] Error for ${addr}: ${msg}`)
         results.push({ address: addr, balance: 0, balanceFormatted: 0, value: 0 })
       }
     }

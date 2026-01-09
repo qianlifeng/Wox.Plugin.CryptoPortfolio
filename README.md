@@ -1,7 +1,9 @@
-# {{.Name}}
+# Wox plugin for crypto portfolio track
+
+![screenshot](./images/screenshot.png)
 
 # Install
 
 ```
-wpm install {{.Name}}
+wpm install portfolio
 ```

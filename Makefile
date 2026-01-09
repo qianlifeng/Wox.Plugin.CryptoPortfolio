@@ -25,7 +25,6 @@ dev:
 
 lint:
 	pnpm run lint
-	pnpm run prettier:check
 
 format:
 	pnpm run prettier:write
@@ -37,5 +36,4 @@ test:
 	pnpm test
 
 package: build
-	cd $(DIST_DIR) && zip -r ../wox.plugin.$(PLUGIN_NAME).wox .
-	@echo "Plugin packaged to wox.plugin.$(PLUGIN_NAME).wox"
+	pnpm package

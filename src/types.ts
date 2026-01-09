@@ -36,3 +36,9 @@ export interface ProcessedAssetData {
   price: number
   decimals: number
 }
+
+export interface BlockchainInfoResponse {
+  [address: string]: {
+    final_balance: number
+  }
+}

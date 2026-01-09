@@ -1,6 +1,6 @@
 import axios from "axios"
 import { BTC } from "../constants"
-import { AssetInfo } from "../types"
+import { AssetInfo, BlockchainInfoResponse } from "../types"
 import { ICoinService, Logger, LogLevel } from "./interfaces"
 
 export class BtcService implements ICoinService {
@@ -28,7 +28,7 @@ export class BtcService implements ICoinService {
     const url = `https://blockchain.info/balance?active=${active}`
 
     try {
-      const response = await axios.get<any>(url)
+      const response = await axios.get<BlockchainInfoResponse>(url)
       const data = response.data
 
       return addresses.map(addr => {
@@ -41,8 +41,9 @@ export class BtcService implements ICoinService {
           value: 0
         }
       })
-    } catch (error: any) {
-      this.log("Error", `Failed to fetch BTC balances: ${error.message || error}`)
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error)
+      this.log("Error", `Failed to fetch BTC balances: ${msg}`)
       return addresses.map(addr => ({
         address: addr,
         balance: 0,
