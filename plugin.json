@@ -1,14 +1,189 @@
 {
-  "Id": "[Id]",
-  "TriggerKeywords": ["[Trigger Keyword]"],
-  "Name": "[Name]",
-  "Description": "[Description]",
-  "Author": "[Author Name]",
+  "Id": "e201dc19-34fb-4ad8-8829-bfb2b2eb25d0",
+  "Name": "Crypto Portfolio",
+  "Description": "i18n:plugin_description",
+  "Author": "qianlifeng",
   "Version": "0.0.1",
   "MinWoxVersion": "2.0.0",
   "Runtime": "nodejs",
-  "Website": "[Website]",
   "Entry": "index.js",
   "Icon": "relative:images/app.png",
-  "SupportedOS": ["windows", "linux", "darwin"]
+  "TriggerKeywords": [
+    "portfolio",
+    "asset"
+  ],
+  "I18n": {
+    "en_US": {
+      "plugin_description": "Track your crypto portfolio",
+      "loading": "Loading Portfolio...",
+      "fetching": "Fetching data...",
+      "total": "Total",
+      "summary": "Summary",
+      "refresh": "Refresh Now",
+      "copy": "Copy Address",
+      "copied": "Copied",
+      "sync_failed": "Sync Failed",
+      "updated": "Updated",
+      "btc_addresses": "BTC Addresses",
+      "btc_addresses_tooltip": "Enter Bitcoin addresses, separated by commas or newlines",
+      "eth_addresses": "ETH Addresses",
+      "eth_addresses_tooltip": "Enter Ethereum addresses, separated by commas or newlines",
+      "currency": "Fiat Currency",
+      "currency_tooltip": "Fiat currency for valuation",
+      "coingecko_api_key": "CoinGecko API Key",
+      "coingecko_api_key_tooltip": "Optional: Enter your CoinGecko Demo API Key",
+      "etherscan_api_key": "Etherscan API Key",
+      "etherscan_api_key_tooltip": "Required for ETH/ERC20 assets",
+      "min_value": "Minimum Value",
+      "min_value_tooltip": "Optional: Minimum value to display",
+      "etherscan_key_required": "Etherscan API Key Required",
+      "etherscan_key_missing_desc": "Click to get a free API key from etherscan.io",
+      "get_etherscan_key": "Get API Key",
+      "status_never": "Never",
+      "status_syncing": " (Syncing...)"
+    },
+    "zh_CN": {
+      "plugin_description": "追踪你的加密货币投资组合",
+      "loading": "正在加载...",
+      "fetching": "正在获取数据...",
+      "total": "总资产",
+      "summary": "概览",
+      "refresh": "立即刷新",
+      "copy": "复制地址",
+      "copied": "已复制",
+      "sync_failed": "同步失败",
+      "updated": "更新于",
+      "btc_addresses": "BTC 地址",
+      "btc_addresses_tooltip": "输入比特币地址，用逗号或换行分隔",
+      "eth_addresses": "ETH 地址",
+      "eth_addresses_tooltip": "输入以太坊地址，用逗号或换行分隔",
+      "currency": "法币",
+      "currency_tooltip": "用于计价的法币",
+      "coingecko_api_key": "CoinGecko API Key",
+      "coingecko_api_key_tooltip": "可选：输入你的 CoinGecko Demo API Key",
+      "etherscan_api_key": "Etherscan API Key",
+      "etherscan_api_key_tooltip": "ETH/ERC20 资产必须填写",
+      "min_value": "最小显示金额",
+      "min_value_tooltip": "可选：低于此金额的资产将不显示",
+      "etherscan_key_required": "缺少 Etherscan API Key",
+      "etherscan_key_missing_desc": "点击免费获取 API Key",
+      "get_etherscan_key": "获取 API Key",
+      "status_never": "从未更新",
+      "status_syncing": " (正在同步...)"
+    }
+  },
+  "SupportedOS": [
+    "windows",
+    "linux",
+    "darwin"
+  ],
+  "SettingDefinitions": [
+    {
+      "Type": "textbox",
+      "Value": {
+        "Key": "btc_addresses",
+        "Label": "BTC Addresses",
+        "Tooltip": "Enter Bitcoin addresses, separated by commas or newlines",
+        "DefaultValue": "",
+        "MaxLines": 5,
+        "Style": {
+          "Width": 450
+        }
+      }
+    },
+    {
+      "Type": "newline"
+    },
+    {
+      "Type": "textbox",
+      "Value": {
+        "Key": "eth_addresses",
+        "Label": "ETH Addresses",
+        "Tooltip": "Enter Ethereum addresses, separated by commas or newlines",
+        "DefaultValue": "",
+        "MaxLines": 5,
+        "Style": {
+          "Width": 450
+        }
+      }
+    },
+    {
+      "Type": "newline"
+    },
+    {
+      "Type": "select",
+      "Value": {
+        "Key": "currency",
+        "Label": "Fiat Currency",
+        "Tooltip": "Fiat currency for valuation",
+        "DefaultValue": "USD",
+        "Options": [
+          {
+            "Label": "USD",
+            "Value": "USD"
+          },
+          {
+            "Label": "CNY",
+            "Value": "CNY"
+          },
+          {
+            "Label": "EUR",
+            "Value": "EUR"
+          },
+          {
+            "Label": "JPY",
+            "Value": "JPY"
+          }
+        ],
+        "Style": {
+          "Width": 450
+        }
+      }
+    },
+    {
+      "Type": "newline"
+    },
+    {
+      "Type": "textbox",
+      "Value": {
+        "Key": "coingecko_api_key",
+        "Label": "CoinGecko API Key",
+        "Tooltip": "Optional: Enter your CoinGecko Demo API Key",
+        "DefaultValue": "",
+        "Style": {
+          "Width": 450
+        }
+      }
+    },
+    {
+      "Type": "newline"
+    },
+    {
+      "Type": "textbox",
+      "Value": {
+        "Key": "etherscan_api_key",
+        "Label": "Etherscan API Key",
+        "Tooltip": "i18n:etherscan_api_key_tooltip",
+        "DefaultValue": "",
+        "Style": {
+          "Width": 450
+        }
+      }
+    },
+    {
+      "Type": "newline"
+    },
+    {
+      "Type": "textbox",
+      "Value": {
+        "Key": "min_value",
+        "Label": "Minimum Value",
+        "Tooltip": "Optional: Minimum value to display",
+        "DefaultValue": "0",
+        "Style": {
+          "Width": 450
+        }
+      }
+    }
+  ]
 }
