@@ -83,6 +83,7 @@
         "DefaultValue": "",
         "MaxLines": 5,
         "Style": {
+          "LabelWidth": 120,
           "Width": 450
         }
       }
@@ -99,6 +100,7 @@
         "DefaultValue": "",
         "MaxLines": 5,
         "Style": {
+          "LabelWidth": 120,
           "Width": 450
         }
       }
@@ -132,6 +134,7 @@
           }
         ],
         "Style": {
+          "LabelWidth": 120,
           "Width": 450
         }
       }
@@ -147,6 +150,7 @@
         "Tooltip": "i18n:alchemy_api_key_tooltip",
         "DefaultValue": "",
         "Style": {
+          "LabelWidth": 120,
           "Width": 450
         }
       }
@@ -162,6 +166,7 @@
         "Tooltip": "i18n:min_value_tooltip",
         "DefaultValue": "0",
         "Style": {
+          "LabelWidth": 120,
           "Width": 450
         }
       }
