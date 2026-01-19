@@ -1,13 +1,14 @@
 import { Context, Plugin, PluginInitParams, PublicAPI, Query, Result } from "@wox-launcher/wox-plugin"
-import { PortfolioManager } from "./managers/PortfolioManager"
+import { PortfolioService } from "./services/portfolio"
 import { randomUUID } from "crypto"
-import { BTC, ETH, USDT, USDC, Symbol } from "./constants"
-import { ProcessedAssetData, AddressConfig, AssetInfo } from "./types"
+import { BTC, ETH, USDT, USDC } from "./constants"
+import { ProcessedAssetData, AddressConfig, AssetInfo, Symbol } from "./types"
 import { exec } from "child_process"
 import * as os from "os"
+import { initLogger } from "./logger"
 
 let api: PublicAPI
-let manager: PortfolioManager
+let portfolio: PortfolioService
 let loadingResultId: string = ""
 let hasEthAssets = false
 let missingEtherscanKey = false
@@ -15,16 +16,17 @@ let missingEtherscanKey = false
 export const plugin: Plugin = {
   init: async (ctx: Context, initParams: PluginInitParams) => {
     api = initParams.API
+    initLogger(api)
 
     api.OnUnload(ctx, async () => {
-      if (manager) {
-        manager.stop()
+      if (portfolio) {
+        portfolio.stop()
       }
     })
 
-    manager = new PortfolioManager(api)
+    portfolio = new PortfolioService()
 
-    manager.onSyncDone(async success => {
+    portfolio.onSyncDone(async success => {
       if (loadingResultId) {
         if (!success) {
           const failedMsg = await api.GetTranslation(ctx, "sync_failed")
@@ -48,11 +50,10 @@ export const plugin: Plugin = {
     await sync(ctx)
   },
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   query: async (ctx: Context, query: Query): Promise<Result[]> => {
-    const state = manager.getState()
-    const currency = manager.getCurrency()
-    const minValue = manager.getMinValue()
+    const state = portfolio.getState()
+    const currency = portfolio.getCurrency()
+    const minValue = portfolio.getMinValue()
 
     // If not synced yet
     if (!state.lastSyncTime && state.isSyncing) {
@@ -167,16 +168,16 @@ export const plugin: Plugin = {
 
     if (hasEthAssets && missingEtherscanKey) {
       results.push({
-        Title: "i18n:etherscan_key_required",
-        SubTitle: "i18n:etherscan_key_missing_desc",
+        Title: "i18n:alchemy_key_required",
+        SubTitle: "i18n:alchemy_key_missing_desc",
         Icon: { ImageType: "emoji", ImageData: "⚠️" },
         Group: "i18n:summary",
         GroupScore: 100,
         Actions: [
           {
-            Name: "i18n:get_etherscan_key",
+            Name: "i18n:get_alchemy_key",
             Action: async () => {
-              openUrl(ctx, "https://etherscan.io/myapikey")
+              openUrl(ctx, "https://dashboard.alchemy.com/")
             }
           }
         ]
@@ -196,7 +197,7 @@ export const plugin: Plugin = {
           Icon: { ImageType: "emoji", ImageData: "🔄" },
           PreventHideAfterAction: true,
           Action: async (ctx: Context) => {
-            await manager.syncNow(ctx)
+            await portfolio.syncNow(ctx)
             await api.RefreshQuery(ctx, { PreserveSelectedIndex: true })
           }
         }
@@ -247,8 +248,7 @@ async function sync(ctx: Context) {
   const currency = (await api.GetSetting(ctx, "currency")) || "USD"
   const btcAddressesStr = (await api.GetSetting(ctx, "btc_addresses")) || ""
   const ethAddressesStr = (await api.GetSetting(ctx, "eth_addresses")) || ""
-  const etherscanApiKey = (await api.GetSetting(ctx, "etherscan_api_key")) || ""
-  const coingeckoApiKey = (await api.GetSetting(ctx, "coingecko_api_key")) || ""
+  const alchemyApiKey = (await api.GetSetting(ctx, "alchemy_api_key")) || ""
   const minValueStr = (await api.GetSetting(ctx, "min_value")) || "0"
   const minValue = parseFloat(minValueStr)
 
@@ -256,9 +256,11 @@ async function sync(ctx: Context) {
   const ethAddresses = parseAddresses(ethAddressesStr)
 
   hasEthAssets = ethAddresses.length > 0
-  missingEtherscanKey = etherscanApiKey.trim() === ""
+  // If we have ETH assets, we need an Alchemy Key. Actually, PriceService also needs it now.
+  // So strictly speaking, the plugin needs an Alchemy Key to work well.
+  missingEtherscanKey = alchemyApiKey.trim() === ""
 
-  await manager.init(ctx, currency, minValue, btcAddresses, ethAddresses, etherscanApiKey, coingeckoApiKey)
+  portfolio.init(ctx, currency, minValue, btcAddresses, ethAddresses, alchemyApiKey)
   await api.Log(ctx, "Info", "Synced")
 }
 

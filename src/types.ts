@@ -1,3 +1,13 @@
+import { WoxImage } from "@wox-launcher/wox-plugin"
+
+export class Symbol {
+  constructor(
+    public symbol: string,
+    public name: string,
+    public logo: WoxImage
+  ) {}
+}
+
 export interface AssetInfo {
   address: string
   balance: number // Raw balance (Satoshi for BTC, Wei for ETH)
@@ -41,6 +51,44 @@ export interface ProcessedAssetData {
   processed: AssetInfo[]
   price: number
   decimals: number
+}
+
+// --- API Types ---
+
+export interface AlchemyJsonRpcRequest {
+  jsonrpc: "2.0"
+  method: string
+  params: unknown[]
+  id: number
+}
+
+export interface AlchemyJsonRpcResponse {
+  jsonrpc: "2.0"
+  id: number
+  result?: unknown
+  error?: unknown
+}
+
+export interface AlchemyPrice {
+  currency: string
+  value: string
+}
+
+export interface AlchemyTokenPrice {
+  symbol: string
+  prices: AlchemyPrice[]
+  error: unknown
+}
+
+export interface AlchemyPriceResponse {
+  data: AlchemyTokenPrice[]
+}
+
+export interface AlchemyTokenBalanceResult {
+  tokenBalances: {
+    contractAddress: string
+    tokenBalance: string // hex
+  }[]
 }
 
 export interface BlockchainInfoResponse {

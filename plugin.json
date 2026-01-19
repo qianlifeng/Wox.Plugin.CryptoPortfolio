@@ -3,7 +3,7 @@
   "Name": "Crypto Portfolio",
   "Description": "i18n:plugin_description",
   "Author": "qianlifeng",
-  "Version": "0.0.3",
+  "Version": "0.0.4",
   "MinWoxVersion": "2.0.0",
   "Runtime": "nodejs",
   "Entry": "index.js",
@@ -30,15 +30,13 @@
       "eth_addresses_tooltip": "Enter Ethereum addresses (one per line). Format: address, tag1, tag2 (tag is optional)",
       "currency": "Fiat Currency",
       "currency_tooltip": "Fiat currency for valuation",
-      "coingecko_api_key": "CoinGecko API Key",
-      "coingecko_api_key_tooltip": "Optional: Enter your CoinGecko Demo API Key",
-      "etherscan_api_key": "Etherscan API Key",
-      "etherscan_api_key_tooltip": "Required for ETH/ERC20 assets",
+      "alchemy_api_key": "Alchemy API Key",
+      "alchemy_api_key_tooltip": "Required for Prices and Balances",
       "min_value": "Minimum Value",
       "min_value_tooltip": "Optional: Minimum value to display",
-      "etherscan_key_required": "Etherscan API Key Required",
-      "etherscan_key_missing_desc": "Click to get a free API key from etherscan.io",
-      "get_etherscan_key": "Get API Key",
+      "alchemy_key_required": "Alchemy API Key Required",
+      "alchemy_key_missing_desc": "Click to get a free API key from alchemy.com",
+      "get_alchemy_key": "Get API Key",
       "status_never": "Never",
       "status_syncing": " (Syncing...)"
     },
@@ -59,15 +57,13 @@
       "eth_addresses_tooltip": "输入以太坊地址（每行一个）。格式：地址, 标签1, 标签2（标签是可选的）",
       "currency": "法币",
       "currency_tooltip": "用于计价的法币",
-      "coingecko_api_key": "CoinGecko API Key",
-      "coingecko_api_key_tooltip": "可选：输入你的 CoinGecko Demo API Key",
-      "etherscan_api_key": "Etherscan API Key",
-      "etherscan_api_key_tooltip": "ETH/ERC20 资产必须填写",
+      "alchemy_api_key": "Alchemy API Key",
+      "alchemy_api_key_tooltip": "价格和余额查询必填",
       "min_value": "最小显示金额",
       "min_value_tooltip": "可选：低于此金额的资产将不显示",
-      "etherscan_key_required": "缺少 Etherscan API Key",
-      "etherscan_key_missing_desc": "点击免费获取 API Key",
-      "get_etherscan_key": "获取 API Key",
+      "alchemy_key_required": "缺少 Alchemy API Key",
+      "alchemy_key_missing_desc": "点击免费获取 API Key",
+      "get_alchemy_key": "获取 API Key",
       "status_never": "从未更新",
       "status_syncing": " (正在同步...)"
     }
@@ -146,24 +142,9 @@
     {
       "Type": "textbox",
       "Value": {
-        "Key": "coingecko_api_key",
-        "Label": "i18n:coingecko_api_key",
-        "Tooltip": "i18n:coingecko_api_key_tooltip",
-        "DefaultValue": "",
-        "Style": {
-          "Width": 450
-        }
-      }
-    },
-    {
-      "Type": "newline"
-    },
-    {
-      "Type": "textbox",
-      "Value": {
-        "Key": "etherscan_api_key",
-        "Label": "i18n:etherscan_api_key",
-        "Tooltip": "i18n:etherscan_api_key_tooltip",
+        "Key": "alchemy_api_key",
+        "Label": "i18n:alchemy_api_key",
+        "Tooltip": "i18n:alchemy_api_key_tooltip",
         "DefaultValue": "",
         "Style": {
           "Width": 450
