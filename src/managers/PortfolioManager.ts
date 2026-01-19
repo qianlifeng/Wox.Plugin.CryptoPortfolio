@@ -104,6 +104,14 @@ export class PortfolioManager {
     this.syncInterval = setInterval(() => this.syncNow(NewContext()), 60 * 5 * 1000)
   }
 
+  stop() {
+    if (this.syncInterval) {
+      this.api.Log(NewContext(), "Info", "unloading, stopping sync loop")
+      clearInterval(this.syncInterval)
+      this.syncInterval = null
+    }
+  }
+
   async syncNow(ctx: Context) {
     if (this.state.isSyncing) return
     this.state.isSyncing = true

@@ -15,6 +15,13 @@ let missingEtherscanKey = false
 export const plugin: Plugin = {
   init: async (ctx: Context, initParams: PluginInitParams) => {
     api = initParams.API
+
+    api.OnUnload(ctx, async () => {
+      if (manager) {
+        manager.stop()
+      }
+    })
+
     manager = new PortfolioManager(api)
 
     manager.onSyncDone(async success => {
