@@ -2,7 +2,7 @@ import { Context, Plugin, PluginInitParams, PublicAPI, Query, Result } from "@wo
 import { PortfolioManager } from "./managers/PortfolioManager"
 import { randomUUID } from "crypto"
 import { BTC, ETH, USDT, USDC, Symbol } from "./constants"
-import { ProcessedAssetData } from "./types"
+import { ProcessedAssetData, AddressConfig, AssetInfo } from "./types"
 import { exec } from "child_process"
 import * as os from "os"
 
@@ -73,9 +73,17 @@ export const plugin: Plugin = {
 
     const formatter = new Intl.NumberFormat("en-US", { style: "currency", currency: currency })
 
+    const term = query.Search ? query.Search.toLowerCase().trim() : ""
+    const tagFilter = (a: AssetInfo) => {
+      if (!term) return true
+      return a.tags && a.tags.some(t => t.toLowerCase().includes(term))
+    }
+
     // Helper to process assets
     const processAssets = (token: Symbol, price: number, decimals: number = 4): ProcessedAssetData => {
-      const assets = state.assets[token.symbol] || []
+      let assets = state.assets[token.symbol] || []
+      assets = assets.filter(tagFilter)
+
       let totalVal = 0
       let totalBal = 0
       const processed = assets.map(a => {
@@ -118,7 +126,37 @@ export const plugin: Plugin = {
       return str.replace(/%s/g, () => args[i++] || "")
     }
 
-    const subTitle = formatStr(tSubTpl, btcPct.toFixed(1), ethPct.toFixed(1), otherPct.toFixed(1))
+    let subTitle = formatStr(tSubTpl, btcPct.toFixed(1), ethPct.toFixed(1), otherPct.toFixed(1))
+
+    // Calculate Tag Allocation if no search term
+    if (!term && totalValue > 0) {
+      const allAssets = [...btcData.processed, ...ethData.processed, ...usdtData.processed, ...usdcData.processed]
+      const tagMap = new Map<string, number>()
+
+      allAssets.forEach(a => {
+        if (a.tags && a.tags.length > 0) {
+          a.tags.forEach(t => {
+            // Issues with mixed case tags: "Tag1" vs "tag1". The parser keeps original case.
+            // But for aggregation we might want to normalize.
+            // Let's assume unique tags for now or group by exact string to be safe with user intent.
+            // Actually, usually case-insensitive grouping is better.
+            // Let's use the first encountered case for display key if we normalize.
+            // For simplicity, I will use the tag string as is.
+            const current = tagMap.get(t) || 0
+            tagMap.set(t, current + a.value)
+          })
+        }
+      })
+
+      if (tagMap.size > 0) {
+        const sortedTags = Array.from(tagMap.entries()).sort((a, b) => b[1] - a[1]) // Sort by value desc
+        const tagParts = sortedTags.map(([tag, val]) => {
+          const pct = (val / totalValue) * 100
+          return `${tag}: ${pct.toFixed(0)}%`
+        })
+        subTitle += ` | ${tagParts.join(" · ")}`
+      }
+    }
 
     if (hasEthAssets && missingEtherscanKey) {
       results.push({
@@ -167,7 +205,7 @@ export const plugin: Plugin = {
 
           results.push({
             Title: `${a.balanceFormatted.toFixed(data.decimals)} ${token.symbol.toUpperCase()}`,
-            SubTitle: a.address,
+            SubTitle: a.tags && a.tags.length > 0 ? `${a.address} · ${a.tags.join(" · ")}` : a.address,
             Group: `${token.name} · ${data.totalBal.toFixed(data.decimals)} · $${data.totalVal.toFixed(0)} `,
             GroupScore: score,
             Icon: token.logo,
@@ -209,7 +247,6 @@ async function sync(ctx: Context) {
 
   const btcAddresses = parseAddresses(btcAddressesStr)
   const ethAddresses = parseAddresses(ethAddressesStr)
-  await api.Log(ctx, "Info", `BTC Addresses: ${btcAddresses.length}, ETH Addresses: ${ethAddresses.length}`)
 
   hasEthAssets = ethAddresses.length > 0
   missingEtherscanKey = etherscanApiKey.trim() === ""
@@ -218,11 +255,24 @@ async function sync(ctx: Context) {
   await api.Log(ctx, "Info", "Synced")
 }
 
-function parseAddresses(input: string): string[] {
+function parseAddresses(input: string): AddressConfig[] {
   return input
-    .split(/[\n,]/)
+    .split("\n")
     .map(s => s.trim())
     .filter(s => s.length > 0)
+    .map(line => {
+      const parts = line
+        .split(",")
+        .map(p => p.trim())
+        .filter(p => p.length > 0)
+      if (parts.length === 0) return null
+      // The first part is the address
+      const address = parts[0]
+      // The rest are tags
+      const tags = parts.slice(1)
+      return { address, tags }
+    })
+    .filter((item): item is AddressConfig => item !== null)
 }
 
 function openUrl(ctx: Context, url: string) {

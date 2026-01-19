@@ -3,12 +3,15 @@
   "Name": "Crypto Portfolio",
   "Description": "i18n:plugin_description",
   "Author": "qianlifeng",
-  "Version": "0.0.1",
+  "Version": "0.0.2",
   "MinWoxVersion": "2.0.0",
   "Runtime": "nodejs",
   "Entry": "index.js",
   "Icon": "relative:images/app.png",
-  "TriggerKeywords": ["portfolio", "asset"],
+  "TriggerKeywords": [
+    "portfolio",
+    "asset"
+  ],
   "I18n": {
     "en_US": {
       "plugin_description": "Track your crypto portfolio",
@@ -22,9 +25,9 @@
       "sync_failed": "Sync Failed",
       "updated": "Updated",
       "btc_addresses": "BTC Addresses",
-      "btc_addresses_tooltip": "Enter Bitcoin addresses, separated by commas or newlines",
+      "btc_addresses_tooltip": "Enter Bitcoin addresses (one per line). Format: address, tag1, tag2 (tag is optional)",
       "eth_addresses": "ETH Addresses",
-      "eth_addresses_tooltip": "Enter Ethereum addresses, separated by commas or newlines",
+      "eth_addresses_tooltip": "Enter Ethereum addresses (one per line). Format: address, tag1, tag2 (tag is optional)",
       "currency": "Fiat Currency",
       "currency_tooltip": "Fiat currency for valuation",
       "coingecko_api_key": "CoinGecko API Key",
@@ -51,9 +54,9 @@
       "sync_failed": "同步失败",
       "updated": "更新于",
       "btc_addresses": "BTC 地址",
-      "btc_addresses_tooltip": "输入比特币地址，用逗号或换行分隔",
+      "btc_addresses_tooltip": "输入比特币地址（每行一个）。格式：地址, 标签1, 标签2（标签是可选的）",
       "eth_addresses": "ETH 地址",
-      "eth_addresses_tooltip": "输入以太坊地址，用逗号或换行分隔",
+      "eth_addresses_tooltip": "输入以太坊地址（每行一个）。格式：地址, 标签1, 标签2（标签是可选的）",
       "currency": "法币",
       "currency_tooltip": "用于计价的法币",
       "coingecko_api_key": "CoinGecko API Key",
@@ -69,14 +72,18 @@
       "status_syncing": " (正在同步...)"
     }
   },
-  "SupportedOS": ["windows", "linux", "darwin"],
+  "SupportedOS": [
+    "windows",
+    "linux",
+    "darwin"
+  ],
   "SettingDefinitions": [
     {
       "Type": "textbox",
       "Value": {
         "Key": "btc_addresses",
-        "Label": "BTC Addresses",
-        "Tooltip": "Enter Bitcoin addresses, separated by commas or newlines",
+        "Label": "i18n:btc_addresses",
+        "Tooltip": "i18n:btc_addresses_tooltip",
         "DefaultValue": "",
         "MaxLines": 5,
         "Style": {
@@ -91,8 +98,8 @@
       "Type": "textbox",
       "Value": {
         "Key": "eth_addresses",
-        "Label": "ETH Addresses",
-        "Tooltip": "Enter Ethereum addresses, separated by commas or newlines",
+        "Label": "i18n:eth_addresses",
+        "Tooltip": "i18n:eth_addresses_tooltip",
         "DefaultValue": "",
         "MaxLines": 5,
         "Style": {
@@ -107,8 +114,8 @@
       "Type": "select",
       "Value": {
         "Key": "currency",
-        "Label": "Fiat Currency",
-        "Tooltip": "Fiat currency for valuation",
+        "Label": "i18n:currency",
+        "Tooltip": "i18n:currency_tooltip",
         "DefaultValue": "USD",
         "Options": [
           {
@@ -140,8 +147,8 @@
       "Type": "textbox",
       "Value": {
         "Key": "coingecko_api_key",
-        "Label": "CoinGecko API Key",
-        "Tooltip": "Optional: Enter your CoinGecko Demo API Key",
+        "Label": "i18n:coingecko_api_key",
+        "Tooltip": "i18n:coingecko_api_key_tooltip",
         "DefaultValue": "",
         "Style": {
           "Width": 450
@@ -155,7 +162,7 @@
       "Type": "textbox",
       "Value": {
         "Key": "etherscan_api_key",
-        "Label": "Etherscan API Key",
+        "Label": "i18n:etherscan_api_key",
         "Tooltip": "i18n:etherscan_api_key_tooltip",
         "DefaultValue": "",
         "Style": {
@@ -170,8 +177,8 @@
       "Type": "textbox",
       "Value": {
         "Key": "min_value",
-        "Label": "Minimum Value",
-        "Tooltip": "Optional: Minimum value to display",
+        "Label": "i18n:min_value",
+        "Tooltip": "i18n:min_value_tooltip",
         "DefaultValue": "0",
         "Style": {
           "Width": 450

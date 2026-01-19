@@ -3,6 +3,12 @@ export interface AssetInfo {
   balance: number // Raw balance (Satoshi for BTC, Wei for ETH)
   balanceFormatted: number // Human readable balance (BTC, ETH)
   value: number // Fiat value
+  tags?: string[]
+}
+
+export interface AddressConfig {
+  address: string
+  tags: string[]
 }
 
 export interface Portfolio {

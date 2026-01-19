@@ -1,5 +1,5 @@
 import { PublicAPI, Context, NewContext } from "@wox-launcher/wox-plugin"
-import { AssetInfo } from "../types"
+import { AssetInfo, AddressConfig } from "../types"
 import { BTC, ETH, USDT, USDC } from "../constants"
 import { BtcService } from "../services/BtcService"
 import { Erc20Service as Erc20Service } from "../services/Erc20Service"
@@ -35,14 +35,14 @@ export class PortfolioManager {
   // Settings
   private currency: string = "USD"
   private minValue: number = 0
-  private btcAddresses: string[] = []
-  private erc20Addresses: string[] = []
+  private btcAddresses: AddressConfig[] = []
+  private erc20Addresses: AddressConfig[] = []
 
   constructor(api: PublicAPI) {
     this.api = api
   }
 
-  async init(ctx: Context, currency: string, minValue: number, btcAddresses: string[], ethAddresses: string[], etherscanApiKey: string, coingeckoApiKey: string) {
+  async init(ctx: Context, currency: string, minValue: number, btcAddresses: AddressConfig[], ethAddresses: AddressConfig[], etherscanApiKey: string, coingeckoApiKey: string) {
     this.currency = currency
     this.minValue = minValue
     this.btcAddresses = btcAddresses
@@ -69,10 +69,10 @@ export class PortfolioManager {
     })
 
     // Initial State
-    this.state.assets[BTC.symbol] = btcAddresses.map(a => ({ address: a, balance: 0, balanceFormatted: 0, value: 0 }))
-    this.state.assets[ETH.symbol] = ethAddresses.map(a => ({ address: a, balance: 0, balanceFormatted: 0, value: 0 }))
-    this.state.assets[USDT.symbol] = ethAddresses.map(a => ({ address: a, balance: 0, balanceFormatted: 0, value: 0 }))
-    this.state.assets[USDC.symbol] = ethAddresses.map(a => ({ address: a, balance: 0, balanceFormatted: 0, value: 0 }))
+    this.state.assets[BTC.symbol] = btcAddresses.map(a => ({ address: a.address, balance: 0, balanceFormatted: 0, value: 0, tags: a.tags }))
+    this.state.assets[ETH.symbol] = ethAddresses.map(a => ({ address: a.address, balance: 0, balanceFormatted: 0, value: 0, tags: a.tags }))
+    this.state.assets[USDT.symbol] = ethAddresses.map(a => ({ address: a.address, balance: 0, balanceFormatted: 0, value: 0, tags: a.tags }))
+    this.state.assets[USDC.symbol] = ethAddresses.map(a => ({ address: a.address, balance: 0, balanceFormatted: 0, value: 0, tags: a.tags }))
 
     // Start Sync Loop
     this.startSyncLoop()
@@ -115,8 +115,19 @@ export class PortfolioManager {
         this.priceService.fetchPrices(ctx, this.currency),
         ...this.coinServices.map(service => {
           // BTC uses BTC addresses, ETH and Tokens use ETH addresses
-          const addrs = service.token.symbol === BTC.symbol ? this.btcAddresses : this.erc20Addresses
-          return service.getBalances(addrs)
+          const configAddrs = service.token.symbol === BTC.symbol ? this.btcAddresses : this.erc20Addresses
+          const addrs = configAddrs.map(c => c.address)
+
+          return service.getBalances(addrs).then(assets => {
+            // Re-attach tags
+            return assets.map(asset => {
+              const config = configAddrs.find(c => c.address === asset.address)
+              if (config) {
+                asset.tags = config.tags
+              }
+              return asset
+            })
+          })
         })
       ])
 
