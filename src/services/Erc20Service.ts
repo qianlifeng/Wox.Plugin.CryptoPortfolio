@@ -2,6 +2,7 @@ import axios from "axios"
 import { AssetInfo } from "../types"
 import { Symbol } from "../constants"
 import { ICoinService, Logger, LogLevel } from "./interfaces"
+import { Throttler } from "../utils/Throttler"
 
 interface EtherscanResponse {
   status: string
@@ -58,7 +59,7 @@ export class Erc20Service implements ICoinService {
     }
 
     try {
-      const response = await axios.get<EtherscanResponse>(url)
+      const response = await Throttler.getInstance().throttle(() => axios.get<EtherscanResponse>(url))
       const data = response.data
 
       this.log("Info", `[Erc20Service-${this.token.symbol}] Response Status: ${data.status}`)
@@ -99,10 +100,7 @@ export class Erc20Service implements ICoinService {
     for (const addr of addresses) {
       const url = `https://api.etherscan.io/v2/api?chainid=1&module=account&action=tokenbalance&contractaddress=${this.contractAddress}&address=${addr}&tag=latest&apikey=${this.apiKey}`
       try {
-        // Rate limit protection
-        await new Promise(r => setTimeout(r, 1000))
-
-        const response = await axios.get<EtherscanResponse>(url)
+        const response = await Throttler.getInstance().throttle(() => axios.get<EtherscanResponse>(url))
         const data = response.data
 
         if (data.status === "1") {

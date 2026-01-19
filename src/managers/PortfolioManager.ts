@@ -100,8 +100,8 @@ export class PortfolioManager {
 
   startSyncLoop() {
     if (this.syncInterval) clearInterval(this.syncInterval)
-    // Sync every 60 seconds
-    this.syncInterval = setInterval(() => this.syncNow(NewContext()), 60000)
+    // Sync every 5 minutes
+    this.syncInterval = setInterval(() => this.syncNow(NewContext()), 60 * 5 * 1000)
   }
 
   async syncNow(ctx: Context) {
