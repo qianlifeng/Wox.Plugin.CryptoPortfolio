@@ -1,6 +1,6 @@
 import { Context, NewContext } from "@wox-launcher/wox-plugin"
 import { AssetInfo, AddressConfig, CryptoPrices } from "../types"
-import { BTC, ETH, USDT, USDC, SyncIntervalSeconds } from "../constants"
+import { BTC, ETH, USDT, USDC, STETH, SyncIntervalSeconds } from "../constants"
 import { BtcChain } from "../chain/btc"
 import { Erc20Chain } from "../chain/erc20"
 import { IChain } from "../chain/chain"
@@ -46,7 +46,8 @@ export class PortfolioService {
       new BtcChain(),
       new Erc20Chain(ETH, alchemyApiKey, undefined, 18),
       new Erc20Chain(USDT, alchemyApiKey, "0xdac17f958d2ee523a2206206994597c13d831ec7", 6),
-      new Erc20Chain(USDC, alchemyApiKey, "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48", 6)
+      new Erc20Chain(USDC, alchemyApiKey, "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48", 6),
+      new Erc20Chain(STETH, alchemyApiKey, "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84", 18)
     ]
 
     // Initial State
@@ -54,6 +55,7 @@ export class PortfolioService {
     this.state.assets[ETH.symbol] = ethAddresses.map(a => ({ address: a.address, balance: 0, balanceFormatted: 0, value: 0, tags: a.tags }))
     this.state.assets[USDT.symbol] = ethAddresses.map(a => ({ address: a.address, balance: 0, balanceFormatted: 0, value: 0, tags: a.tags }))
     this.state.assets[USDC.symbol] = ethAddresses.map(a => ({ address: a.address, balance: 0, balanceFormatted: 0, value: 0, tags: a.tags }))
+    this.state.assets[STETH.symbol] = ethAddresses.map(a => ({ address: a.address, balance: 0, balanceFormatted: 0, value: 0, tags: a.tags }))
 
     // Start Sync Loop
     this.startSyncLoop()
@@ -97,13 +99,14 @@ export class PortfolioService {
     }
 
     try {
-      const data = await fetchTokenPrices(this.alchemyApiKey, ["BTC", "ETH", "USDT", "USDC"])
+      const data = await fetchTokenPrices(this.alchemyApiKey, ["BTC", "ETH", "USDT", "USDC", "STETH"])
 
       const prices: CryptoPrices = {
         bitcoin: {},
         ethereum: {},
         tether: {},
-        "usd-coin": {}
+        "usd-coin": {},
+        steth: {}
       }
 
       if (data && data.data && Array.isArray(data.data)) {
@@ -117,6 +120,7 @@ export class PortfolioService {
               if (symbol === "ETH") prices.ethereum[this.currency.toLowerCase()] = val
               if (symbol === "USDT") prices.tether![this.currency.toLowerCase()] = val
               if (symbol === "USDC") prices["usd-coin"]![this.currency.toLowerCase()] = val
+              if (symbol === "STETH") prices.steth![this.currency.toLowerCase()] = val
             }
           }
         })

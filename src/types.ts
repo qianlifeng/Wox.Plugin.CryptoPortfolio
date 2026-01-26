@@ -43,6 +43,7 @@ export interface CryptoPrices {
   ethereum: { [currency: string]: number }
   tether?: { [currency: string]: number }
   "usd-coin"?: { [currency: string]: number }
+  steth?: { [currency: string]: number }
 }
 
 export interface ProcessedAssetData {

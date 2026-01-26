@@ -1,8 +1,8 @@
 import { Context, Plugin, PluginInitParams, PublicAPI, Query, Result } from "@wox-launcher/wox-plugin"
 import { PortfolioService } from "./services/portfolio"
 import { randomUUID } from "crypto"
-import { BTC, ETH, USDT, USDC } from "./constants"
-import { ProcessedAssetData, AddressConfig, AssetInfo, Symbol } from "./types"
+import { BTC, ETH, USDT, USDC, STETH } from "./constants"
+import { ProcessedAssetData, AddressConfig, Symbol } from "./types"
 import { exec } from "child_process"
 import * as os from "os"
 import { initLogger } from "./logger"
@@ -78,19 +78,25 @@ export const plugin: Plugin = {
     const ethPrice = state.prices.ethereum?.[currencyKey] || 0
     const usdtPrice = state.prices.tether?.[currencyKey] || 0
     const usdcPrice = state.prices["usd-coin"]?.[currencyKey] || 0
+    const stethPrice = state.prices.steth?.[currencyKey] || 0
 
     const formatter = new Intl.NumberFormat("en-US", { style: "currency", currency: currency })
 
     const term = query.Search ? query.Search.toLowerCase().trim() : ""
-    const tagFilter = (a: AssetInfo) => {
-      if (!term) return true
-      return a.tags && a.tags.some(t => t.toLowerCase().includes(term))
-    }
 
     // Helper to process assets
     const processAssets = (token: Symbol, price: number, decimals: number = 4): ProcessedAssetData => {
       let assets = state.assets[token.symbol] || []
-      assets = assets.filter(tagFilter)
+
+      // Filter by query term (matches tag, symbol, or name)
+      if (term) {
+        assets = assets.filter(a => {
+          const matchTag = a.tags && a.tags.some(t => t.toLowerCase().includes(term))
+          const matchSymbol = token.symbol.toLowerCase().includes(term)
+          const matchName = token.name.toLowerCase().includes(term)
+          return matchTag || matchSymbol || matchName
+        })
+      }
 
       let totalVal = 0
       let totalBal = 0
@@ -107,8 +113,9 @@ export const plugin: Plugin = {
     const ethData = processAssets(ETH, ethPrice, 2)
     const usdtData = processAssets(USDT, usdtPrice, 1)
     const usdcData = processAssets(USDC, usdcPrice, 1)
+    const stethData = processAssets(STETH, stethPrice, 2)
 
-    const totalValue = btcData.totalVal + ethData.totalVal + usdtData.totalVal + usdcData.totalVal
+    const totalValue = btcData.totalVal + ethData.totalVal + usdtData.totalVal + usdcData.totalVal + stethData.totalVal
 
     const results: Result[] = []
 
@@ -120,8 +127,8 @@ export const plugin: Plugin = {
     if (state.isSyncing) timeStr += tSyncing
 
     const btcPct = totalValue > 0 ? (btcData.totalVal / totalValue) * 100 : 0
-    const ethPct = totalValue > 0 ? (ethData.totalVal / totalValue) * 100 : 0
-    const otherPct = totalValue > 0 ? ((usdtData.totalVal + usdcData.totalVal) / totalValue) * 100 : 0
+    const ethPct = totalValue > 0 ? ((ethData.totalVal + stethData.totalVal) / totalValue) * 100 : 0
+    const stablePct = totalValue > 0 ? ((usdtData.totalVal + usdcData.totalVal) / totalValue) * 100 : 0
 
     // Fetch translations
     const tTotal = await api.GetTranslation(ctx, "total")
@@ -134,11 +141,11 @@ export const plugin: Plugin = {
       return str.replace(/%s/g, () => args[i++] || "")
     }
 
-    let subTitle = formatStr(tSubTpl, btcPct.toFixed(1), ethPct.toFixed(1), otherPct.toFixed(1))
+    let subTitle = formatStr(tSubTpl, btcPct.toFixed(1), ethPct.toFixed(1), stablePct.toFixed(1))
 
-    // Calculate Tag Allocation if no search term
-    if (!term && totalValue > 0) {
-      const allAssets = [...btcData.processed, ...ethData.processed, ...usdtData.processed, ...usdcData.processed]
+    // Calculate Tag Allocation based on current results (filtered or not)
+    if (totalValue > 0) {
+      const allAssets = [...btcData.processed, ...ethData.processed, ...usdtData.processed, ...usdcData.processed, ...stethData.processed]
       const tagMap = new Map<string, number>()
 
       allAssets.forEach(a => {
@@ -214,7 +221,7 @@ export const plugin: Plugin = {
           results.push({
             Title: `${a.balanceFormatted.toFixed(data.decimals)} ${token.symbol.toUpperCase()}`,
             SubTitle: a.tags && a.tags.length > 0 ? `${a.address} · ${a.tags.join(" · ")}` : a.address,
-            Group: `${token.name} · ${data.totalBal.toFixed(data.decimals)} · $${data.totalVal.toFixed(0)} `,
+            Group: `${token.symbol.toUpperCase()} · ${data.totalBal.toFixed(data.decimals)} · $${data.totalVal.toFixed(0)} `,
             GroupScore: score,
             Icon: token.logo,
             Tails: [{ Type: "text", Text: formatter.format(a.value) }],
@@ -236,6 +243,7 @@ export const plugin: Plugin = {
 
     addResults(btcData, BTC, 90)
     addResults(ethData, ETH, 80)
+    addResults(stethData, STETH, 75)
     addResults(usdtData, USDT, 70)
     addResults(usdcData, USDC, 60)
 
