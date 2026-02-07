@@ -1,7 +1,7 @@
 import { Context, Plugin, PluginInitParams, PublicAPI, Query, Result } from "@wox-launcher/wox-plugin"
 import { PortfolioService } from "./services/portfolio"
 import { randomUUID } from "crypto"
-import { BTC, ETH, USDT, USDC, STETH } from "./constants"
+import { AllTokens } from "./constants"
 import { ProcessedAssetData, AddressConfig, Symbol } from "./types"
 import { exec } from "child_process"
 import * as os from "os"
@@ -74,14 +74,7 @@ export const plugin: Plugin = {
     loadingResultId = ""
 
     const currencyKey = currency.toLowerCase()
-    const btcPrice = state.prices.bitcoin?.[currencyKey] || 0
-    const ethPrice = state.prices.ethereum?.[currencyKey] || 0
-    const usdtPrice = state.prices.tether?.[currencyKey] || 0
-    const usdcPrice = state.prices["usd-coin"]?.[currencyKey] || 0
-    const stethPrice = state.prices.steth?.[currencyKey] || 0
-
     const formatter = new Intl.NumberFormat("en-US", { style: "currency", currency: currency })
-
     const term = query.Search ? query.Search.toLowerCase().trim() : ""
 
     // Helper to process assets
@@ -94,7 +87,8 @@ export const plugin: Plugin = {
           const matchTag = a.tags && a.tags.some(t => t.toLowerCase().includes(term))
           const matchSymbol = token.symbol.toLowerCase().includes(term)
           const matchName = token.name.toLowerCase().includes(term)
-          return matchTag || matchSymbol || matchName
+          const matchAddress = a.address.toLowerCase().includes(term)
+          return matchTag || matchSymbol || matchName || matchAddress
         })
       }
 
@@ -109,13 +103,13 @@ export const plugin: Plugin = {
       return { totalVal, totalBal, processed, price, decimals }
     }
 
-    const btcData = processAssets(BTC, btcPrice, 4)
-    const ethData = processAssets(ETH, ethPrice, 2)
-    const usdtData = processAssets(USDT, usdtPrice, 1)
-    const usdcData = processAssets(USDC, usdcPrice, 1)
-    const stethData = processAssets(STETH, stethPrice, 2)
+    // Calculate Data for All Tokens
+    const tokensData = AllTokens.map(token => {
+      const price = state.prices[token.symbol]?.[currencyKey] || 0
+      return processAssets(token, price, token.displayDecimals)
+    })
 
-    const totalValue = btcData.totalVal + ethData.totalVal + usdtData.totalVal + usdcData.totalVal + stethData.totalVal
+    const totalValue = tokensData.reduce((acc, curr) => acc + curr.totalVal, 0)
 
     const results: Result[] = []
 
@@ -126,26 +120,33 @@ export const plugin: Plugin = {
     let timeStr = state.lastSyncTime ? state.lastSyncTime.toLocaleTimeString() : tNever
     if (state.isSyncing) timeStr += tSyncing
 
-    const btcPct = totalValue > 0 ? (btcData.totalVal / totalValue) * 100 : 0
-    const ethPct = totalValue > 0 ? ((ethData.totalVal + stethData.totalVal) / totalValue) * 100 : 0
-    const stablePct = totalValue > 0 ? ((usdtData.totalVal + usdcData.totalVal) / totalValue) * 100 : 0
+    // Calculate percentages for subtitle by Group
+    const groupValues: { [key: string]: number } = {}
+    tokensData.forEach((data, index) => {
+      const token = AllTokens[index]
+      const group = token.group || "Other"
+      groupValues[group] = (groupValues[group] || 0) + data.totalVal
+    })
 
     // Fetch translations
     const tTotal = await api.GetTranslation(ctx, "total")
     const tUpdated = await api.GetTranslation(ctx, "updated")
-    const tSubTpl = "BTC: %s% · ETH: %s% · Stable: %s%"
 
-    // Simple format implementation
-    const formatStr = (str: string, ...args: string[]) => {
-      let i = 0
-      return str.replace(/%s/g, () => args[i++] || "")
-    }
+    // Generate Subtitle parts
+    // Sort by total value desc
+    const groupParts = Object.keys(groupValues)
+      .filter(g => groupValues[g] > 0)
+      .sort((a, b) => groupValues[b] - groupValues[a])
+      .map(g => {
+        const pct = totalValue > 0 ? (groupValues[g] / totalValue) * 100 : 0
+        return `${g}: ${pct.toFixed(1)}%`
+      })
 
-    let subTitle = formatStr(tSubTpl, btcPct.toFixed(1), ethPct.toFixed(1), stablePct.toFixed(1))
+    let subTitle = groupParts.join(" · ")
 
     // Calculate Tag Allocation based on current results (filtered or not)
     if (totalValue > 0) {
-      const allAssets = [...btcData.processed, ...ethData.processed, ...usdtData.processed, ...usdcData.processed, ...stethData.processed]
+      const allAssets = tokensData.flatMap(d => d.processed)
       const tagMap = new Map<string, number>()
 
       allAssets.forEach(a => {
@@ -195,7 +196,7 @@ export const plugin: Plugin = {
       Title: `${tTotal}: ${formatter.format(totalValue)}`,
       SubTitle: subTitle,
       Group: "i18n:summary",
-      GroupScore: 100,
+      GroupScore: 100000,
       Icon: { ImageType: "emoji", ImageData: "💰" },
       Tails: [{ Type: "text", Text: `${tUpdated}: ${timeStr}` }],
       Actions: [
@@ -241,11 +242,14 @@ export const plugin: Plugin = {
       }
     }
 
-    addResults(btcData, BTC, 90)
-    addResults(ethData, ETH, 80)
-    addResults(stethData, STETH, 75)
-    addResults(usdtData, USDT, 70)
-    addResults(usdcData, USDC, 60)
+    // Add results sorted by total value
+    const sortedTokens = tokensData.map((data, index) => ({ data, token: AllTokens[index] })).sort((a, b) => b.data.totalVal - a.data.totalVal)
+
+    sortedTokens.forEach(({ data, token }, index) => {
+      // Assign score based on rank (highest value first)
+      const score = 100 - index
+      addResults(data, token, score)
+    })
 
     return results
   }

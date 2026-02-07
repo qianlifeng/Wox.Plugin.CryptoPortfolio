@@ -4,7 +4,11 @@ export class Symbol {
   constructor(
     public symbol: string,
     public name: string,
-    public logo: WoxImage
+    public logo: WoxImage,
+    public contractAddress?: string,
+    public decimals: number = 18,
+    public displayDecimals: number = 4,
+    public group?: string
   ) {}
 }
 
@@ -39,11 +43,7 @@ export interface Portfolio {
 }
 
 export interface CryptoPrices {
-  bitcoin: { [currency: string]: number }
-  ethereum: { [currency: string]: number }
-  tether?: { [currency: string]: number }
-  "usd-coin"?: { [currency: string]: number }
-  steth?: { [currency: string]: number }
+  [symbol: string]: { [currency: string]: number }
 }
 
 export interface ProcessedAssetData {
@@ -77,6 +77,7 @@ export interface AlchemyPrice {
 
 export interface AlchemyTokenPrice {
   symbol: string
+  address?: string
   prices: AlchemyPrice[]
   error: unknown
 }

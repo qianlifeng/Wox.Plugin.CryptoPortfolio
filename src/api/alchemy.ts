@@ -4,12 +4,21 @@ import { AlchemyPriceResponse, AlchemyJsonRpcRequest, AlchemyJsonRpcResponse, Al
 export const ALCHEMY_PRICES_API_BASE = "https://api.g.alchemy.com/prices/v1"
 const REQUEST_TIMEOUT = 10000 // 10 seconds
 
-export async function fetchTokenPrices(apiKey: string, symbols: string[]): Promise<AlchemyPriceResponse> {
+export async function fetchTokenPricesBySymbol(apiKey: string, symbols: string[]): Promise<AlchemyPriceResponse> {
   // Alchemy API expects symbols as repeated query params: symbols=BTC&symbols=ETH
   const params = new URLSearchParams()
   symbols.forEach(s => params.append("symbols", s))
   const url = `${ALCHEMY_PRICES_API_BASE}/${apiKey}/tokens/by-symbol?${params.toString()}`
   const response = await axios.get<AlchemyPriceResponse>(url, { timeout: REQUEST_TIMEOUT })
+  return response.data
+}
+
+export async function fetchTokenPricesByAddress(apiKey: string, addresses: string[]): Promise<AlchemyPriceResponse> {
+  const url = `${ALCHEMY_PRICES_API_BASE}/${apiKey}/tokens/by-address`
+  const body = {
+    addresses: addresses.map(addr => ({ network: "eth-mainnet", address: addr }))
+  }
+  const response = await axios.post<AlchemyPriceResponse>(url, body, { timeout: REQUEST_TIMEOUT })
   return response.data
 }
 

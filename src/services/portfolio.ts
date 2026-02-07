@@ -1,10 +1,10 @@
 import { Context, NewContext } from "@wox-launcher/wox-plugin"
 import { AssetInfo, AddressConfig, CryptoPrices } from "../types"
-import { BTC, ETH, USDT, USDC, STETH, SyncIntervalSeconds } from "../constants"
+import { BTC, AllTokens, SyncIntervalSeconds } from "../constants"
 import { BtcChain } from "../chain/btc"
 import { Erc20Chain } from "../chain/erc20"
 import { IChain } from "../chain/chain"
-import { fetchTokenPrices } from "../api/alchemy"
+import { fetchTokenPricesBySymbol, fetchTokenPricesByAddress } from "../api/alchemy"
 import { log } from "../logger"
 
 export interface PortfolioState {
@@ -17,7 +17,7 @@ export interface PortfolioState {
 export class PortfolioService {
   private state: PortfolioState = {
     lastSyncTime: null,
-    prices: { bitcoin: {}, ethereum: {} },
+    prices: {},
     assets: {},
     isSyncing: false
   }
@@ -42,20 +42,15 @@ export class PortfolioService {
     this.alchemyApiKey = alchemyApiKey
 
     // Initialize chains
-    this.chains = [
-      new BtcChain(),
-      new Erc20Chain(ETH, alchemyApiKey, undefined, 18),
-      new Erc20Chain(USDT, alchemyApiKey, "0xdac17f958d2ee523a2206206994597c13d831ec7", 6),
-      new Erc20Chain(USDC, alchemyApiKey, "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48", 6),
-      new Erc20Chain(STETH, alchemyApiKey, "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84", 18)
-    ]
+    this.chains = AllTokens.map(token => {
+      if (token.symbol === BTC.symbol) return new BtcChain()
+      return new Erc20Chain(token, alchemyApiKey, token.contractAddress, token.decimals)
+    })
 
     // Initial State
-    this.state.assets[BTC.symbol] = btcAddresses.map(a => ({ address: a.address, balance: 0, balanceFormatted: 0, value: 0, tags: a.tags }))
-    this.state.assets[ETH.symbol] = ethAddresses.map(a => ({ address: a.address, balance: 0, balanceFormatted: 0, value: 0, tags: a.tags }))
-    this.state.assets[USDT.symbol] = ethAddresses.map(a => ({ address: a.address, balance: 0, balanceFormatted: 0, value: 0, tags: a.tags }))
-    this.state.assets[USDC.symbol] = ethAddresses.map(a => ({ address: a.address, balance: 0, balanceFormatted: 0, value: 0, tags: a.tags }))
-    this.state.assets[STETH.symbol] = ethAddresses.map(a => ({ address: a.address, balance: 0, balanceFormatted: 0, value: 0, tags: a.tags }))
+    AllTokens.forEach(token => {
+      this.state.assets[token.symbol] = (token.symbol === BTC.symbol ? btcAddresses : ethAddresses).map(a => ({ address: a.address, balance: 0, balanceFormatted: 0, value: 0, tags: a.tags }))
+    })
 
     // Start Sync Loop
     this.startSyncLoop()
@@ -95,20 +90,27 @@ export class PortfolioService {
   private async fetchPrices(ctx: Context): Promise<CryptoPrices> {
     if (!this.alchemyApiKey) {
       log(ctx, "Error", "No Alchemy API Key provided")
-      return { bitcoin: {}, ethereum: {} }
+      return {}
     }
 
     try {
-      const data = await fetchTokenPrices(this.alchemyApiKey, ["BTC", "ETH", "USDT", "USDC", "STETH"])
+      // 1. Fetch Prices: Split tokens into those with address and those without
+      const addressTokens = AllTokens.filter(t => !!t.contractAddress)
+      const symbolTokens = AllTokens.filter(t => !t.contractAddress)
 
-      const prices: CryptoPrices = {
-        bitcoin: {},
-        ethereum: {},
-        tether: {},
-        "usd-coin": {},
-        steth: {}
-      }
+      const erc20Addresses = addressTokens.map(t => t.contractAddress!)
 
+      const [data, dataByAddress] = await Promise.all([
+        fetchTokenPricesBySymbol(
+          this.alchemyApiKey,
+          symbolTokens.map(t => t.symbol.toUpperCase())
+        ),
+        fetchTokenPricesByAddress(this.alchemyApiKey, erc20Addresses)
+      ])
+
+      const prices: CryptoPrices = {}
+
+      // Process Symbol Data (for tokens like BTC, ETH without contract address)
       if (data && data.data && Array.isArray(data.data)) {
         data.data.forEach(item => {
           const symbol = item.symbol.toUpperCase()
@@ -116,11 +118,29 @@ export class PortfolioService {
           if (priceEntry) {
             const val = parseFloat(priceEntry.value)
             if (!isNaN(val)) {
-              if (symbol === "BTC") prices.bitcoin[this.currency.toLowerCase()] = val
-              if (symbol === "ETH") prices.ethereum[this.currency.toLowerCase()] = val
-              if (symbol === "USDT") prices.tether![this.currency.toLowerCase()] = val
-              if (symbol === "USDC") prices["usd-coin"]![this.currency.toLowerCase()] = val
-              if (symbol === "STETH") prices.steth![this.currency.toLowerCase()] = val
+              // Find matching token by symbol (case-insensitive)
+              const token = symbolTokens.find(t => t.symbol.toUpperCase() === symbol)
+              if (token) {
+                prices[token.symbol] = { [this.currency.toLowerCase()]: val }
+              }
+            }
+          }
+        })
+      }
+
+      // Process Address Data (for ERC20s)
+      if (dataByAddress && dataByAddress.data && Array.isArray(dataByAddress.data)) {
+        dataByAddress.data.forEach(item => {
+          const priceEntry = item.prices && item.prices.find(p => p.currency === "usd")
+          if (priceEntry) {
+            const val = parseFloat(priceEntry.value)
+            if (!isNaN(val)) {
+              // Map address back to our symbol keys
+              const token = addressTokens.find(t => t.contractAddress?.toLowerCase() === item.address?.toLowerCase())
+              if (token) {
+                if (!prices[token.symbol]) prices[token.symbol] = {}
+                prices[token.symbol][this.currency.toLowerCase()] = val
+              }
             }
           }
         })
@@ -130,7 +150,7 @@ export class PortfolioService {
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : String(error)
       log(ctx, "Error", `Failed to fetch prices: ${msg}`)
-      return { bitcoin: {}, ethereum: {} }
+      return {}
     }
   }
 
@@ -144,7 +164,6 @@ export class PortfolioService {
       const [prices, ...balancesResults] = await Promise.all([
         this.fetchPrices(ctx),
         ...this.chains.map(chain => {
-          // BTC uses BTC addresses, ETH and Tokens use ETH addresses
           const configAddrs = chain.token.symbol === BTC.symbol ? this.btcAddresses : this.erc20Addresses
           const addrs = configAddrs.map(c => c.address)
 
