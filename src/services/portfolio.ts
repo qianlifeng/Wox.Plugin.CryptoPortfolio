@@ -1,6 +1,6 @@
 import { Context, NewContext } from "@wox-launcher/wox-plugin"
 import { AssetInfo, AddressConfig, CryptoPrices } from "../types"
-import { BTC, AllTokens, SyncIntervalSeconds } from "../constants"
+import { BTC, AllTokens, DefaultSyncIntervalMinutes } from "../constants"
 import { BtcChain } from "../chain/btc"
 import { Erc20Chain } from "../chain/erc20"
 import { IChain } from "../chain/chain"
@@ -29,14 +29,16 @@ export class PortfolioService {
   // Settings
   private currency: string = "USD"
   private minValue: number = 0
+  private syncIntervalMinutes: number = DefaultSyncIntervalMinutes
   private btcAddresses: AddressConfig[] = []
   private erc20Addresses: AddressConfig[] = []
 
   private listeners: ((success: boolean) => void)[] = []
 
-  init(ctx: Context, currency: string, minValue: number, btcAddresses: AddressConfig[], ethAddresses: AddressConfig[], alchemyApiKey: string) {
+  init(ctx: Context, currency: string, minValue: number, syncIntervalMinutes: number, btcAddresses: AddressConfig[], ethAddresses: AddressConfig[], alchemyApiKey: string) {
     this.currency = currency
     this.minValue = minValue
+    this.syncIntervalMinutes = syncIntervalMinutes
     this.btcAddresses = btcAddresses
     this.erc20Addresses = ethAddresses
     this.alchemyApiKey = alchemyApiKey
@@ -76,7 +78,7 @@ export class PortfolioService {
 
   startSyncLoop() {
     if (this.syncInterval) clearInterval(this.syncInterval)
-    this.syncInterval = setInterval(() => this.syncNow(NewContext()), SyncIntervalSeconds * 1000)
+    this.syncInterval = setInterval(() => this.syncNow(NewContext()), this.syncIntervalMinutes * 60 * 1000)
   }
 
   stop() {

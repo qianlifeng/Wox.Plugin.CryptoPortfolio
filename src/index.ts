@@ -6,6 +6,7 @@ import { ProcessedAssetData, AddressConfig, Symbol } from "./types"
 import { exec } from "child_process"
 import * as os from "os"
 import { initLogger } from "./logger"
+import { DefaultSyncIntervalMinutes } from "./constants"
 
 let api: PublicAPI
 let portfolio: PortfolioService
@@ -262,7 +263,9 @@ async function sync(ctx: Context) {
   const ethAddressesStr = (await api.GetSetting(ctx, "eth_addresses")) || ""
   const alchemyApiKey = (await api.GetSetting(ctx, "alchemy_api_key")) || ""
   const minValueStr = (await api.GetSetting(ctx, "min_value")) || "0"
+  const syncIntervalMinutesStr = (await api.GetSetting(ctx, "sync_interval_minutes")) || String(DefaultSyncIntervalMinutes)
   const minValue = parseFloat(minValueStr)
+  const syncIntervalMinutes = parseSyncIntervalMinutes(syncIntervalMinutesStr)
 
   const btcAddresses = parseAddresses(btcAddressesStr)
   const ethAddresses = parseAddresses(ethAddressesStr)
@@ -272,8 +275,17 @@ async function sync(ctx: Context) {
   // So strictly speaking, the plugin needs an Alchemy Key to work well.
   missingEtherscanKey = alchemyApiKey.trim() === ""
 
-  portfolio.init(ctx, currency, minValue, btcAddresses, ethAddresses, alchemyApiKey)
+  portfolio.init(ctx, currency, minValue, syncIntervalMinutes, btcAddresses, ethAddresses, alchemyApiKey)
   await api.Log(ctx, "Info", "Synced")
+}
+
+function parseSyncIntervalMinutes(input: string): number {
+  const value = parseInt(input, 10)
+  if (!Number.isFinite(value) || value <= 0) {
+    return DefaultSyncIntervalMinutes
+  }
+
+  return value
 }
 
 function parseAddresses(input: string): AddressConfig[] {

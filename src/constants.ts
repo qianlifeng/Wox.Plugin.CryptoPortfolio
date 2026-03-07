@@ -14,6 +14,6 @@ export const Erc20Tokens = [USDT, USDC, STETH, AETHUSDT]
 export const AllTokens = [BTC, ETH, ...Erc20Tokens]
 
 /**
- * Auto sync interval in seconds
+ * Default auto sync interval in minutes
  */
-export const SyncIntervalSeconds = 60
+export const DefaultSyncIntervalMinutes = 3

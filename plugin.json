@@ -3,7 +3,7 @@
   "Name": "Crypto Portfolio",
   "Description": "i18n:plugin_description",
   "Author": "qianlifeng",
-  "Version": "0.0.6",
+  "Version": "0.0.7",
   "MinWoxVersion": "2.0.0",
   "Runtime": "nodejs",
   "Entry": "index.js",
@@ -34,6 +34,8 @@
       "alchemy_api_key_tooltip": "Required for Prices and Balances",
       "min_value": "Minimum Value",
       "min_value_tooltip": "Optional: Minimum value to display",
+      "sync_interval_minutes": "Sync Interval (Minutes)",
+      "sync_interval_minutes_tooltip": "Auto sync interval in whole minutes.",
       "alchemy_key_required": "Alchemy API Key Required",
       "alchemy_key_missing_desc": "Click to get a free API key from alchemy.com",
       "get_alchemy_key": "Get API Key",
@@ -61,6 +63,8 @@
       "alchemy_api_key_tooltip": "价格和余额查询必填",
       "min_value": "最小显示金额",
       "min_value_tooltip": "可选：低于此金额的资产将不显示",
+      "sync_interval_minutes": "同步周期（分钟）",
+      "sync_interval_minutes_tooltip": "自动同步周期，单位为整数分钟。",
       "alchemy_key_required": "缺少 Alchemy API Key",
       "alchemy_key_missing_desc": "点击免费获取 API Key",
       "get_alchemy_key": "获取 API Key",
@@ -100,7 +104,6 @@
         "DefaultValue": "",
         "MaxLines": 5,
         "Style": {
-          "LabelWidth": 120,
           "Width": 450
         }
       }
@@ -134,7 +137,6 @@
           }
         ],
         "Style": {
-          "LabelWidth": 120,
           "Width": 450
         }
       }
@@ -150,7 +152,29 @@
         "Tooltip": "i18n:alchemy_api_key_tooltip",
         "DefaultValue": "",
         "Style": {
-          "LabelWidth": 120,
+          "Width": 450
+        }
+      }
+    },
+    {
+      "Type": "newline"
+    },
+    {
+      "Type": "textbox",
+      "Value": {
+        "Key": "sync_interval_minutes",
+        "Label": "i18n:sync_interval_minutes",
+        "Tooltip": "i18n:sync_interval_minutes_tooltip",
+        "DefaultValue": "3",
+        "Validators": [
+          {
+            "Type": "is_number",
+            "Value": {
+              "IsInteger": true
+            }
+          }
+        ],
+        "Style": {
           "Width": 450
         }
       }
@@ -165,8 +189,15 @@
         "Label": "i18n:min_value",
         "Tooltip": "i18n:min_value_tooltip",
         "DefaultValue": "0",
+        "Validators": [
+          {
+            "Type": "is_number",
+            "Value": {
+              "IsFloat": true
+            }
+          }
+        ],
         "Style": {
-          "LabelWidth": 120,
           "Width": 450
         }
       }
