@@ -1,7 +1,9 @@
 import { Context, NewContext } from "@wox-launcher/wox-plugin"
 import { AssetInfo, AddressConfig, CryptoPrices } from "../types"
-import { BTC, AllTokens, DefaultSyncIntervalMinutes } from "../constants"
+import { AllTokens, BNB, BTC, DOGE, DefaultSyncIntervalMinutes } from "../constants"
 import { BtcChain } from "../chain/btc"
+import { BscChain } from "../chain/bsc"
+import { DogeChain } from "../chain/doge"
 import { Erc20Chain } from "../chain/erc20"
 import { IChain } from "../chain/chain"
 import { fetchTokenPricesBySymbol, fetchTokenPricesByAddress } from "../api/alchemy"
@@ -32,26 +34,42 @@ export class PortfolioService {
   private syncIntervalMinutes: number = DefaultSyncIntervalMinutes
   private btcAddresses: AddressConfig[] = []
   private erc20Addresses: AddressConfig[] = []
+  private bnbAddresses: AddressConfig[] = []
+  private dogeAddresses: AddressConfig[] = []
 
   private listeners: ((success: boolean) => void)[] = []
 
-  init(ctx: Context, currency: string, minValue: number, syncIntervalMinutes: number, btcAddresses: AddressConfig[], ethAddresses: AddressConfig[], alchemyApiKey: string) {
+  init(
+    ctx: Context,
+    currency: string,
+    minValue: number,
+    syncIntervalMinutes: number,
+    btcAddresses: AddressConfig[],
+    ethAddresses: AddressConfig[],
+    bnbAddresses: AddressConfig[],
+    dogeAddresses: AddressConfig[],
+    alchemyApiKey: string
+  ) {
     this.currency = currency
     this.minValue = minValue
     this.syncIntervalMinutes = syncIntervalMinutes
     this.btcAddresses = btcAddresses
     this.erc20Addresses = ethAddresses
+    this.bnbAddresses = bnbAddresses
+    this.dogeAddresses = dogeAddresses
     this.alchemyApiKey = alchemyApiKey
 
     // Initialize chains
     this.chains = AllTokens.map(token => {
       if (token.symbol === BTC.symbol) return new BtcChain()
+      if (token.symbol === BNB.symbol) return new BscChain()
+      if (token.symbol === DOGE.symbol) return new DogeChain()
       return new Erc20Chain(token, alchemyApiKey, token.contractAddress, token.decimals)
     })
 
     // Initial State
     AllTokens.forEach(token => {
-      this.state.assets[token.symbol] = (token.symbol === BTC.symbol ? btcAddresses : ethAddresses).map(a => ({ address: a.address, balance: 0, balanceFormatted: 0, value: 0, tags: a.tags }))
+      this.state.assets[token.symbol] = this.getAddressConfigs(token.symbol).map(a => ({ address: a.address, balance: 0, balanceFormatted: 0, value: 0, tags: a.tags }))
     })
 
     // Start Sync Loop
@@ -166,7 +184,7 @@ export class PortfolioService {
       const [prices, ...balancesResults] = await Promise.all([
         this.fetchPrices(ctx),
         ...this.chains.map(chain => {
-          const configAddrs = chain.token.symbol === BTC.symbol ? this.btcAddresses : this.erc20Addresses
+          const configAddrs = this.getAddressConfigs(chain.token.symbol)
           const addrs = configAddrs.map(c => c.address)
 
           return chain.getBalances(ctx, addrs).then(assets => {
@@ -199,5 +217,12 @@ export class PortfolioService {
       this.state.isSyncing = false
       this.listeners.forEach(cb => cb(success))
     }
+  }
+
+  private getAddressConfigs(symbol: string): AddressConfig[] {
+    if (symbol === BTC.symbol) return this.btcAddresses
+    if (symbol === BNB.symbol) return this.bnbAddresses
+    if (symbol === DOGE.symbol) return this.dogeAddresses
+    return this.erc20Addresses
   }
 }

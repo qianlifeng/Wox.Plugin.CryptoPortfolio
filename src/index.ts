@@ -11,8 +11,8 @@ import { DefaultSyncIntervalMinutes } from "./constants"
 let api: PublicAPI
 let portfolio: PortfolioService
 let loadingResultId: string = ""
-let hasEthAssets = false
-let missingEtherscanKey = false
+let hasConfiguredAssets = false
+let missingAlchemyKey = false
 
 export const plugin: Plugin = {
   init: async (ctx: Context, initParams: PluginInitParams) => {
@@ -175,7 +175,7 @@ export const plugin: Plugin = {
       }
     }
 
-    if (hasEthAssets && missingEtherscanKey) {
+    if (hasConfiguredAssets && missingAlchemyKey) {
       results.push({
         Title: "i18n:alchemy_key_required",
         SubTitle: "i18n:alchemy_key_missing_desc",
@@ -261,6 +261,8 @@ async function sync(ctx: Context) {
   const currency = (await api.GetSetting(ctx, "currency")) || "USD"
   const btcAddressesStr = (await api.GetSetting(ctx, "btc_addresses")) || ""
   const ethAddressesStr = (await api.GetSetting(ctx, "eth_addresses")) || ""
+  const bnbAddressesStr = (await api.GetSetting(ctx, "bnb_addresses")) || ""
+  const dogeAddressesStr = (await api.GetSetting(ctx, "doge_addresses")) || ""
   const alchemyApiKey = (await api.GetSetting(ctx, "alchemy_api_key")) || ""
   const minValueStr = (await api.GetSetting(ctx, "min_value")) || "0"
   const syncIntervalMinutesStr = (await api.GetSetting(ctx, "sync_interval_minutes")) || String(DefaultSyncIntervalMinutes)
@@ -269,13 +271,13 @@ async function sync(ctx: Context) {
 
   const btcAddresses = parseAddresses(btcAddressesStr)
   const ethAddresses = parseAddresses(ethAddressesStr)
+  const bnbAddresses = parseAddresses(bnbAddressesStr)
+  const dogeAddresses = parseAddresses(dogeAddressesStr)
 
-  hasEthAssets = ethAddresses.length > 0
-  // If we have ETH assets, we need an Alchemy Key. Actually, PriceService also needs it now.
-  // So strictly speaking, the plugin needs an Alchemy Key to work well.
-  missingEtherscanKey = alchemyApiKey.trim() === ""
+  hasConfiguredAssets = btcAddresses.length + ethAddresses.length + bnbAddresses.length + dogeAddresses.length > 0
+  missingAlchemyKey = alchemyApiKey.trim() === ""
 
-  portfolio.init(ctx, currency, minValue, syncIntervalMinutes, btcAddresses, ethAddresses, alchemyApiKey)
+  portfolio.init(ctx, currency, minValue, syncIntervalMinutes, btcAddresses, ethAddresses, bnbAddresses, dogeAddresses, alchemyApiKey)
   await api.Log(ctx, "Info", "Synced")
 }
 

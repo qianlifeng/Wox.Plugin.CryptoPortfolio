@@ -3,15 +3,12 @@
   "Name": "Crypto Portfolio",
   "Description": "i18n:plugin_description",
   "Author": "qianlifeng",
-  "Version": "0.0.7",
+  "Version": "0.0.8",
   "MinWoxVersion": "2.0.0",
   "Runtime": "nodejs",
   "Entry": "index.js",
   "Icon": "relative:images/app.png",
-  "TriggerKeywords": [
-    "portfolio",
-    "asset"
-  ],
+  "TriggerKeywords": ["portfolio", "asset"],
   "I18n": {
     "en_US": {
       "plugin_description": "Track your crypto portfolio",
@@ -28,6 +25,10 @@
       "btc_addresses_tooltip": "Enter Bitcoin addresses (one per line). Format: address, tag1, tag2 (tag is optional)",
       "eth_addresses": "ETH Addresses",
       "eth_addresses_tooltip": "Enter Ethereum addresses (one per line). Format: address, tag1, tag2 (tag is optional)",
+      "bnb_addresses": "BNB Smart Chain Addresses",
+      "bnb_addresses_tooltip": "Enter BNB Smart Chain addresses (one per line). Format: address, tag1, tag2 (tag is optional)",
+      "doge_addresses": "DOGE Addresses",
+      "doge_addresses_tooltip": "Enter Dogecoin addresses (one per line). Format: address, tag1, tag2 (tag is optional)",
       "currency": "Fiat Currency",
       "currency_tooltip": "Fiat currency for valuation",
       "alchemy_api_key": "Alchemy API Key",
@@ -57,6 +58,10 @@
       "btc_addresses_tooltip": "输入比特币地址（每行一个）。格式：地址, 标签1, 标签2（标签是可选的）",
       "eth_addresses": "ETH 地址",
       "eth_addresses_tooltip": "输入以太坊地址（每行一个）。格式：地址, 标签1, 标签2（标签是可选的）",
+      "bnb_addresses": "BNB Smart Chain 地址",
+      "bnb_addresses_tooltip": "输入 BNB Smart Chain 地址（每行一个）。格式：地址, 标签1, 标签2（标签是可选的）",
+      "doge_addresses": "DOGE 地址",
+      "doge_addresses_tooltip": "输入 Dogecoin 地址（每行一个）。格式：地址, 标签1, 标签2（标签是可选的）",
       "currency": "法币",
       "currency_tooltip": "用于计价的法币",
       "alchemy_api_key": "Alchemy API Key",
@@ -72,11 +77,7 @@
       "status_syncing": " (正在同步...)"
     }
   },
-  "SupportedOS": [
-    "windows",
-    "linux",
-    "darwin"
-  ],
+  "SupportedOS": ["windows", "linux", "darwin"],
   "SettingDefinitions": [
     {
       "Type": "textbox",
@@ -101,6 +102,38 @@
         "Key": "eth_addresses",
         "Label": "i18n:eth_addresses",
         "Tooltip": "i18n:eth_addresses_tooltip",
+        "DefaultValue": "",
+        "MaxLines": 5,
+        "Style": {
+          "Width": 450
+        }
+      }
+    },
+    {
+      "Type": "newline"
+    },
+    {
+      "Type": "textbox",
+      "Value": {
+        "Key": "bnb_addresses",
+        "Label": "i18n:bnb_addresses",
+        "Tooltip": "i18n:bnb_addresses_tooltip",
+        "DefaultValue": "",
+        "MaxLines": 5,
+        "Style": {
+          "Width": 450
+        }
+      }
+    },
+    {
+      "Type": "newline"
+    },
+    {
+      "Type": "textbox",
+      "Value": {
+        "Key": "doge_addresses",
+        "Label": "i18n:doge_addresses",
+        "Tooltip": "i18n:doge_addresses_tooltip",
         "DefaultValue": "",
         "MaxLines": 5,
         "Style": {

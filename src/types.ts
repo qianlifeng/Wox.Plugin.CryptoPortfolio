@@ -98,3 +98,8 @@ export interface BlockchainInfoResponse {
     final_balance: number
   }
 }
+
+export interface BlockCypherAddressBalanceResponse {
+  address: string
+  final_balance: number
+}

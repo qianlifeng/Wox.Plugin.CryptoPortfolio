@@ -3,6 +3,8 @@ import { Symbol } from "./types"
 // Native Tokens
 export const BTC = new Symbol("btc", "Bitcoin", { ImageType: "relative", ImageData: "images/BTC.png" }, undefined, 8, 4, "BTC")
 export const ETH = new Symbol("eth", "Ethereum", { ImageType: "relative", ImageData: "images/ETH.png" }, undefined, 18, 2, "ETH")
+export const BNB = new Symbol("bnb", "BNB Smart Chain", { ImageType: "relative", ImageData: "images/BNB.png" }, undefined, 18, 4, "BNB")
+export const DOGE = new Symbol("doge", "Dogecoin", { ImageType: "relative", ImageData: "images/DOGE.png" }, undefined, 8, 2, "DOGE")
 
 // ERC20 Tokens
 export const STETH = new Symbol("steth", "Lido Staked Ether", { ImageType: "relative", ImageData: "images/STETH.png" }, "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84", 18, 2, "ETH")
@@ -11,7 +13,7 @@ export const USDC = new Symbol("usdc", "USD Coin", { ImageType: "relative", Imag
 export const AETHUSDT = new Symbol("aEthUSDT", "Aave Ethereum USDT", { ImageType: "relative", ImageData: "images/USDT.png" }, "0x23878914efe38d27c4d67ab83ed1b93a74d4086a", 6, 2, "Stable")
 
 export const Erc20Tokens = [USDT, USDC, STETH, AETHUSDT]
-export const AllTokens = [BTC, ETH, ...Erc20Tokens]
+export const AllTokens = [BTC, ETH, BNB, DOGE, ...Erc20Tokens]
 
 /**
  * Default auto sync interval in minutes
